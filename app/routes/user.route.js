@@ -9,9 +9,8 @@ router
 
   .delete(users.deleteAll);
 
-  router.post("/login", users.login);
-  router.post('/logout', users.logout);
-
+router.post("/login", users.login);
+router.post("/logout", users.logout);
 
 router
   .route("/:id")

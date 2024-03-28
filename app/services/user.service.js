@@ -44,7 +44,7 @@ class UserService {
       },
       { returnDocument: "after", upsert: true }
     );
-    return result.value;
+    return result;
   }
 
   async findByName(name) {
@@ -84,25 +84,20 @@ class UserService {
     return result.deletedCount;
   }
 
-
-  
   async login(email, password) {
-    let user  =  null;
-      user = await this.Users.findOne({ email });
-     if(user === null){
+    let user = null;
+    user = await this.Users.findOne({ email });
+    if (user === null) {
       user = await this.NhanViens.findOne({ email });
-     }
+    }
 
-
-  
     if (user && user.password === password) {
-  
       return user;
     } else {
       return null;
     }
   }
-  
+
   async logout(email) {
     await this.Users.updateOne({ email }, { $set: { token: null } });
   }

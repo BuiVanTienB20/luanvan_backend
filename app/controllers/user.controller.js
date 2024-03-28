@@ -5,15 +5,33 @@ const MongoDB = require("../utils/mongodb.util");
 
 exports.create = async (req, res, next) => {
   if (!req.body?.name) {
-    return next(new ApiError(400, "Name  are required fields"));
+    return res
+      .status(400)
+      .json({ error: { code: 400, message: "Name is a required field" } });
   }
+
   try {
     const userService = new UserService(MongoDB.client);
-    const document = await userService.create(req.body);
-    return res.send(document);
+    const existingUser = await userService.find({ email: req.body.email });
+
+    if (existingUser.length > 0) {
+      // Nếu email đã tồn tại trong cơ sở dữ liệu
+      return res
+        .status(400)
+        .json({ error: { code: 400, message: "Email has already been used" } });
+    } else {
+      // Nếu email chưa tồn tại trong cơ sở dữ liệu
+      await userService.create(req.body);
+      return res.status(200).json({ message: "Đăng ký thành công" });
+    }
   } catch (error) {
     console.log(error);
-    return next(new ApiError(500, "An error occurred while creating a user"));
+    return res.status(500).json({
+      error: {
+        code: 500,
+        message: "An error occurred while creating a user",
+      },
+    });
   }
 };
 
@@ -103,21 +121,22 @@ exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email và mật khẩu là trường bắt buộc' });
+    return res
+      .status(400)
+      .json({ message: "Email và mật khẩu là trường bắt buộc" });
   }
 
   try {
     const userService = new UserService(MongoDB.client);
-    const  user  = await userService.login(email, password);
-    
+    const user = await userService.login(email, password);
 
     if (user) {
-      res.status(200).json({ message: 'Đăng nhập thành công', user :  user  });
+      res.status(200).json({ message: "Đăng nhập thành công", user: user });
     } else {
-      res.status(401).json({ message: 'Đăng nhập thất bại' });
+      res.status(401).json({ message: "Đăng nhập thất bại" });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
 
@@ -125,17 +144,14 @@ exports.logout = async (req, res, next) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: 'Email là trường bắt buộc' });
+    return res.status(400).json({ message: "Email là trường bắt buộc" });
   }
 
   try {
     const userService = new UserService(MongoDB.client);
     await userService.logout(email);
-    res.status(200).json({ message: 'Đăng xuất thành công' });
+    res.status(200).json({ message: "Đăng xuất thành công" });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+    res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
-
-
-
